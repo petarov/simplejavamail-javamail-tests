@@ -17,6 +17,10 @@ To test SimpleJavaMail run:
 
     ./gradlew run --args='sm <num-mails-to-send> <smtp-host> <smtp-port>'
     
+To test SimpleJavaMail in parallel mode w/h 10 threads run:
+
+    ./gradlew run --args='smt <num-mails-to-send> <smtp-host> <smtp-port>'
+    
 To test JavaMail run:
 
     ./gradlew run --args='jm <num-mails-to-send> <smtp-host> <smtp-port>'
