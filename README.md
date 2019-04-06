@@ -1,7 +1,7 @@
-SimpleMail / JavaMail Test
-============================
+SimpleJavaMail and JavaMail Performance Tests
+=============================================
 
-A naìve performance testing.
+A naïve performance testing.
 
 Steps to test:
 
@@ -13,7 +13,7 @@ Run a headless FakeSMTP instance on a remote server.
     
 Warm-up FakeSMTP by running a bunch of tests first.
 
-To test SimpleMail run:
+To test SimpleJavaMail run:
 
     ./gradlew run --args='sm <num-mails-to-send> <smtp-host> <smtp-port>'
     
