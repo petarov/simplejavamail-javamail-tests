@@ -69,7 +69,7 @@ public class Main {
 
         Mailer mailer = newMailer(threads);
         for (int i = 0; i < maxMails; i++) {
-            mailer.sendMail(newMail(i));
+            mailer.sendMail(newMail(i), threads > 0);
         }
 
         long stopTime = System.currentTimeMillis();
@@ -174,11 +174,22 @@ public class Main {
 
         msg.setContent(multipart);
 
-        // Send message
+        // variant #1
+//        Transport.send(msg);
+
+        // variant #2
+//        try (Transport t = session.getTransport()) {
+//            t.connect();
+//            t.sendMessage(msg, msg.getAllRecipients());
+//        } finally {
+//            // do nothing
+//        }
+
+        // variant #3
         if (!transport.isConnected())
             transport.connect();
 
-        transport.sendMessage(msg, InternetAddress.parse("lolly.pop@javamail.com", false));
+        transport.sendMessage(msg, msg.getAllRecipients());
     }
 
 }
