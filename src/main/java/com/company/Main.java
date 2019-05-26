@@ -1,11 +1,12 @@
 package com.company;
 
 import org.apache.commons.io.IOUtils;
-import org.simplejavamail.email.Email;
+import org.simplejavamail.api.email.Email;
+import org.simplejavamail.api.mailer.Mailer;
+import org.simplejavamail.api.mailer.config.TransportStrategy;
 import org.simplejavamail.email.EmailBuilder;
-import org.simplejavamail.mailer.Mailer;
 import org.simplejavamail.mailer.MailerBuilder;
-import org.simplejavamail.mailer.config.TransportStrategy;
+import org.simplejavamail.mailer.internal.MailerRegularBuilderImpl;
 
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
@@ -91,7 +92,7 @@ public class Main {
     }
 
     private Mailer newMailer(int threads) {
-        MailerBuilder.MailerRegularBuilder builder = MailerBuilder
+        final MailerRegularBuilderImpl builder = MailerBuilder
                 .withSMTPServer(smtpHost, smtpPort)
                 .withTransportStrategy(TransportStrategy.SMTP)
                 .withSessionTimeout(10 * 1000)
