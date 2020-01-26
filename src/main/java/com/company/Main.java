@@ -2,7 +2,9 @@ package com.company;
 
 import org.apache.commons.io.IOUtils;
 import org.simplejavamail.api.email.Email;
+import org.simplejavamail.api.mailer.AsyncResponse;
 import org.simplejavamail.api.mailer.Mailer;
+import org.simplejavamail.api.mailer.MailerRegularBuilder;
 import org.simplejavamail.api.mailer.config.TransportStrategy;
 import org.simplejavamail.email.EmailBuilder;
 import org.simplejavamail.mailer.MailerBuilder;
@@ -19,8 +21,12 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class Main {
@@ -63,21 +69,33 @@ public class Main {
 
     private long sendViaSimpleMail(int threads) {
         System.out.println(String.format("Sending %d mails using SimpleMail...", maxMails));
+
+        List<Future> futures = new ArrayList<>(maxMails);
+        Mailer mailer = newMailer(threads);
+
         long startTime = System.currentTimeMillis();
 
-        Mailer mailer = newMailer(threads);
         for (int i = 0; i < maxMails; i++) {
-            mailer.sendMail(newMail(i), threads > 0);
+            AsyncResponse resp = mailer.sendMail(newMail(i), threads > 0);
+            resp.onException(Throwable::printStackTrace);
+            futures.add(resp.getFuture());
+        }
+
+        try {
+            if (threads > 0) {
+                for (Future future : futures) {
+                    future.get();
+                }
+
+                // should we call this here?
+//                mailer.shutdownConnectionPool().get();
+            }
+        } catch (Throwable t) {
+            System.err.println("SHUTDOWN ERROR: " + t.getMessage());
         }
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
-
-        try {
-            mailer.shutdownConnectionPool().get(8, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            System.err.println(e.getMessage());
-        }
 
         return elapsedTime;
     }
@@ -96,11 +114,12 @@ public class Main {
     }
 
     private Mailer newMailer(int threads) {
-        MailerRegularBuilderImpl builder = MailerBuilder
+        MailerRegularBuilder builder = MailerBuilder
                 .withSMTPServer(smtpHost, smtpPort)
                 .withTransportStrategy(TransportStrategy.SMTP)
                 .withSessionTimeout(10 * 1000)
                 .clearEmailAddressCriteria();
+//                .withDebugLogging(true)
 
         if (threads > 0) {
             System.out.println("**Using " + threads + " threads.");
@@ -108,8 +127,6 @@ public class Main {
         } else {
             System.out.println("**Using connection pool.");
             builder.withThreadPoolSize(0);
-            builder.withConnectionPoolCoreSize(4);
-            builder.withConnectionPoolMaxSize(4);
             // wait max 1 minute for available connection (default forever)
 //            builder.withConnectionPoolClaimTimeoutMillis((int) TimeUnit.MINUTES.toMillis(1));
             // keep connections spinning for half an hour (default 5 seconds)
