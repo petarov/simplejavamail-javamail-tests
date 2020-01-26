@@ -1,19 +1,16 @@
 package com.company;
 
 import org.apache.commons.io.IOUtils;
-import org.simplejavamail.email.Email;
+import org.simplejavamail.api.email.Email;
+import org.simplejavamail.api.mailer.Mailer;
+import org.simplejavamail.api.mailer.config.TransportStrategy;
 import org.simplejavamail.email.EmailBuilder;
-import org.simplejavamail.mailer.Mailer;
 import org.simplejavamail.mailer.MailerBuilder;
-import org.simplejavamail.mailer.config.TransportStrategy;
+import org.simplejavamail.mailer.internal.MailerRegularBuilderImpl;
 
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
-import javax.mail.BodyPart;
-import javax.mail.Message;
-import javax.mail.Multipart;
-import javax.mail.Session;
-import javax.mail.Transport;
+import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
@@ -24,6 +21,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 public class Main {
 
@@ -74,6 +72,13 @@ public class Main {
 
         long stopTime = System.currentTimeMillis();
         long elapsedTime = stopTime - startTime;
+
+        try {
+            mailer.shutdownConnectionPool().get(8, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+
         return elapsedTime;
     }
 
@@ -91,7 +96,7 @@ public class Main {
     }
 
     private Mailer newMailer(int threads) {
-        MailerBuilder.MailerRegularBuilder builder = MailerBuilder
+        MailerRegularBuilderImpl builder = MailerBuilder
                 .withSMTPServer(smtpHost, smtpPort)
                 .withTransportStrategy(TransportStrategy.SMTP)
                 .withSessionTimeout(10 * 1000)
@@ -100,6 +105,15 @@ public class Main {
         if (threads > 0) {
             System.out.println("**Using " + threads + " threads.");
             builder.withThreadPoolSize(threads);
+        } else {
+            System.out.println("**Using connection pool.");
+            builder.withThreadPoolSize(0);
+            builder.withConnectionPoolCoreSize(4);
+            builder.withConnectionPoolMaxSize(4);
+            // wait max 1 minute for available connection (default forever)
+//            builder.withConnectionPoolClaimTimeoutMillis((int) TimeUnit.MINUTES.toMillis(1));
+            // keep connections spinning for half an hour (default 5 seconds)
+//            builder.withConnectionPoolExpireAfterMillis((int) TimeUnit.MINUTES.toMillis(30));
         }
 
         return builder.buildMailer();

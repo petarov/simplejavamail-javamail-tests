@@ -13,13 +13,13 @@ Run a headless FakeSMTP instance on a remote server.
     
 Warm-up FakeSMTP by running a bunch of tests first.
 
-To test SimpleJavaMail run:
-
-    ./gradlew run --args='sm <num-mails-to-send> <smtp-host> <smtp-port>'
-    
-To test SimpleJavaMail in parallel mode w/h 10 threads run:
+To test SimpleJavaMail in parallel mode with 10 (default value) threads run:
 
     ./gradlew run --args='smt <num-mails-to-send> <smtp-host> <smtp-port>'
+
+To test SimpleJavaMail with connection pool (default size 4) run:
+
+    ./gradlew run --args='sm <num-mails-to-send> <smtp-host> <smtp-port>'
     
 To test JavaMail run:
 
