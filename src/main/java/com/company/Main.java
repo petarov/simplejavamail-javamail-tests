@@ -88,7 +88,7 @@ public class Main {
                 }
 
                 // should we call this here?
-//                mailer.shutdownConnectionPool().get();
+                mailer.shutdownConnectionPool().get();
             }
         } catch (Throwable t) {
             System.err.println("SHUTDOWN ERROR: " + t.getMessage());
