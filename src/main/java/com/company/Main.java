@@ -91,16 +91,16 @@ public class Main {
                 }
             }
 
-            // should we call this here?
+            long stopTime = System.currentTimeMillis();
+            long elapsedTime = stopTime - startTime;
+
+            // shutdown mailer after elapsing mails send time
             mailer.shutdownConnectionPool().get();
+
+            return elapsedTime;
         } catch (Throwable t) {
             throw new RuntimeException("Sending error!", t);
         }
-
-        long stopTime = System.currentTimeMillis();
-        long elapsedTime = stopTime - startTime;
-
-        return elapsedTime;
     }
 
     private Email newMail(int idx) {
