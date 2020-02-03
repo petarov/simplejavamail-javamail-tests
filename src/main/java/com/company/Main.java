@@ -75,23 +75,26 @@ public class Main {
 
         long startTime = System.currentTimeMillis();
 
-        for (int i = 0; i < maxMails; i++) {
-            AsyncResponse resp = mailer.sendMail(newMail(i), threads > 0);
-            resp.onException(Throwable::printStackTrace);
-            futures.add(resp.getFuture());
-        }
-
         try {
             if (threads > 0) {
+                for (int i = 0; i < maxMails; i++) {
+                    AsyncResponse resp = mailer.sendMail(newMail(i), true);
+                    resp.onException(Throwable::printStackTrace);
+                    futures.add(resp.getFuture());
+                }
                 for (Future future : futures) {
                     future.get();
                 }
-
-                // should we call this here?
-                mailer.shutdownConnectionPool().get();
+            } else {
+                for (int i = 0; i < maxMails; i++) {
+                    mailer.sendMail(newMail(i), false);
+                }
             }
+
+            // should we call this here?
+            mailer.shutdownConnectionPool().get();
         } catch (Throwable t) {
-            System.err.println("SHUTDOWN ERROR: " + t.getMessage());
+            throw new RuntimeException("Sending error!", t);
         }
 
         long stopTime = System.currentTimeMillis();
@@ -122,8 +125,8 @@ public class Main {
 //                .withDebugLogging(true)
 
         if (threads > 0) {
-            System.out.println("**Using " + threads + " threads.");
-            builder.withThreadPoolSize(threads);
+            builder.resetThreadPoolSize();
+            System.out.println("**Using " + builder.getThreadPoolSize() + " threads.");
         } else {
             System.out.println("**Using connection pool.");
             builder.withThreadPoolSize(0);
